@@ -14,7 +14,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "cypress": "^13.17.0",
+    "@faker-js/faker": "^10.4.0",
+    "cypress": "^15.14.2",
+    "cypress-split": "^1.24.31",
     "eslint": "^8.57.0",
     "eslint-plugin-cypress": "^2.15.1",
     "mochawesome": "^7.1.3"
