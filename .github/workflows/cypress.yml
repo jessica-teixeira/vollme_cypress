@@ -34,7 +34,7 @@ jobs:
           cd web
           npm install
           npm start & 
-                 
+               
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v6
         with:
