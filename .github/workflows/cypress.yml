@@ -4,43 +4,79 @@ on:
   push:
     branches:
       - testes
+
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
-    strategy:
+    strategy: 
       fail-fast: false
       matrix:
-        containers: [1, 2]
+        container: [1, 2, 3]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4      
-      - name: Checkout
         uses: actions/checkout@v4
-        with: 
-          path: server      
-      - name: Start Server BackEnd
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Create .env file for server
+        run: |
+          cd server
+          echo "SECRET_KEY=vollmed_secret_key_12345" >> .env
+          echo "SECRET=vollmed_jwt_secret_12345" >> .env
+          
+      - name: Install Server Dependencies
         run: |
           cd server
           npm install
+          
+      - name: Build Server
+        run: |
+          cd server
+          npm run compile
+          
+      - name: Start Server BackEnd
+        run: |
+          cd server
           npm start &
           until [ "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080)" == "200" ]; do
             echo "Waiting for server to start..."
-            sleep 1
+            sleep 2
           done
           echo "Server is running successfully."
-        working-directory: server
-      - name: Start Web App FrontEnd
+          
+      - name: Install FrontEnd Dependencies
         run: |
           cd web
           npm install
-          npm start & 
-               
+          
+      - name: Start Web App FrontEnd
+        run: |
+          cd web
+          npm start &
+          sleep 10
+          
+      - name: Install Cypress Dependencies
+        run: |
+          npm install
+          
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v6
         with:
+          install: false
           spec: |
             cypress/e2e/cadastro-sucesso.cy.js
             cypress/e2e/login-clinica.cy.js
+            cypress/e2e/login-api.cy.js
             cypress/e2e/dashboard.cy.js
           wait-on: 'http://localhost:3000,http://localhost:8080'
-         
+          wait-on-timeout: 120
+          record: true
+          parallel: true
+          group: "Cypress Tests"
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
